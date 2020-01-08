@@ -27,6 +27,7 @@ CREATE TABLE Country(
     CountryName VARCHAR(100) NOT NULL,
     PRIMARY KEY(CountryId)
 );
+CREATE INDEX ON Country USING HASH (CountryName);
 
 CREATE TABLE Person(
     PersonId INT NOT NULL,
@@ -38,6 +39,7 @@ CREATE TABLE Person(
     PRIMARY KEY (PersonId),
     FOREIGN KEY (CountryId) REFERENCES Country(CountryId)
 );
+CREATE INDEX ON Person USING HASH (CountryId);
 
 CREATE TABLE Genre(
     GenreId INT NOT NULL,
@@ -56,6 +58,7 @@ CREATE TABLE Film(
     Description VARCHAR(1000),
     PRIMARY KEY (FilmId)
 );
+CREATE INDEX ON Film USING BTREE(ReleaseDate);
 
 CREATE TABLE FilmGenre(
     FilmId INT NOT NULL,
@@ -64,6 +67,8 @@ CREATE TABLE FilmGenre(
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId),
     FOREIGN KEY (GenreId) REFERENCES Genre(GenreId)
 );
+CREATE INDEX ON FilmGenre USING HASH (FilmId);
+CREATE INDEX ON FilmGenre USING HASH (GenreId);
 
 CREATE TABLE FilmCountry(
     FilmId INT NOT NULL,
@@ -72,6 +77,8 @@ CREATE TABLE FilmCountry(
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId),
     FOREIGN KEY (CountryId) REFERENCES Country(CountryId)
 );
+CREATE INDEX ON FilmCountry USING HASH (FilmId);
+CREATE INDEX ON FilmCountry USING HASH (CountryId);
 
 CREATE TABLE Score(
     FilmId INT NOT NULL,
@@ -81,6 +88,7 @@ CREATE TABLE Score(
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId),
     CHECK (Score BETWEEN 0 AND 10)
 );
+CREATE INDEX ON Score USING HASH (FilmId);
 
 CREATE TABLE Series(
     FilmId INT NOT NULL,
@@ -91,6 +99,8 @@ CREATE TABLE Series(
     PRIMARY KEY (FilmId, Season, SeriesNo),
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId)
 );
+CREATE INDEX ON Series USING HASH (FilmId);
+CREATE INDEX ON Series USING BTREE (ReleaseDate);
 
 CREATE TABLE Boxoffice(
     FilmId INT NOT NULL,
@@ -100,6 +110,8 @@ CREATE TABLE Boxoffice(
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId),
     FOREIGN KEY (CountryId) REFERENCES Country(CountryId)
 );
+CREATE INDEX ON Boxoffice USING HASH (FilmId);
+CREATE INDEX ON Boxoffice USING HASH (CountryId);
 
 CREATE TABLE Profession(
     ProfessionId INT NOT NULL,
@@ -117,6 +129,11 @@ CREATE TABLE Filmmaker(
     FOREIGN KEY (PersonId) REFERENCES Person(PersonId),
     FOREIGN KEY (ProfessionId) REFERENCES Profession(ProfessionId)
 );
+CREATE INDEX ON Filmmaker USING HASH (FilmId);
+CREATE INDEX ON Filmmaker USING HASH (PersonId);
+CREATE INDEX ON Filmmaker USING HASH (ProfessionId);
+CREATE INDEX ON Filmmaker(PersonId, FilmId);
+CREATE INDEX ON Filmmaker(FilmId, PersonId);
 
 CREATE TABLE AwardingOrg(
     AwardId INT NOT NULL,
@@ -124,6 +141,8 @@ CREATE TABLE AwardingOrg(
     AwardDate DATE NOT NULL,
     PRIMARY KEY (AwardId)
 );
+CREATE INDEX ON AwardingOrg USING HASH (AwardName);
+CREATE INDEX ON AwardingOrg USING BTREE (AwardDate);
 
 CREATE TABLE FilmNomination(
     FNominationId INT NOT NULL,
@@ -138,6 +157,7 @@ CREATE TABLE PersonNomination(
     PRIMARY KEY (PNominationId),
     FOREIGN KEY (ProfessionId) REFERENCES Profession(ProfessionId)
 );
+CREATE INDEX ON PersonNomination USING HASH (ProfessionId);
 
 CREATE TABLE FilmAward(
     AwardId INT NOT NULL,
@@ -149,6 +169,9 @@ CREATE TABLE FilmAward(
     FOREIGN KEY (AwardId) REFERENCES AwardingOrg(AwardId),
     FOREIGN KEY (FNominationId) REFERENCES FilmNomination(FNominationId)
 );
+CREATE INDEX ON FilmAward USING HASH (FilmId);
+CREATE INDEX ON FilmAward USING HASH (AwardId);
+CREATE INDEX ON FilmAward USING HASH (FNominationId);
 
 CREATE TABLE PersonAward(
     AwardId INT NOT NULL,
@@ -162,6 +185,9 @@ CREATE TABLE PersonAward(
     FOREIGN KEY (AwardId) REFERENCES AwardingOrg(AwardId),
     FOREIGN KEY (PNominationId) REFERENCES PersonNomination(PNominationId)
 );
+CREATE INDEX ON PersonAward(FilmId, PersonId, ProfessionId);
+CREATE INDEX ON PersonAward USING HASH (AwardId);
+CREATE INDEX ON PersonAward USING HASH (PNominationId);
 
 CREATE TABLE Keys(
     TableName VARCHAR(50) NOT NULL,
