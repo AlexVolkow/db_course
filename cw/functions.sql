@@ -172,7 +172,7 @@ BEGIN
     END IF;
 
     IF CurrentBoxoffice.Currency = newBoxOffice.Currency THEN
-        UPDATE Boxoffice SET Income.Qnt = (CurrentBoxoffice).Qnt + (newBoxOffice).Qnt 
+        UPDATE Boxoffice SET Income.Qnt = (Income).Qnt + (newBoxOffice).Qnt 
         WHERE FilmId = mFilmId AND CountryId = mCountryId;
         RETURN ((CurrentBoxoffice).Qnt + (newBoxOffice).Qnt, newBoxOffice.Currency);
     ELSE

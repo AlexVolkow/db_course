@@ -27,7 +27,7 @@ CREATE TABLE Country(
     CountryName VARCHAR(100) NOT NULL,
     PRIMARY KEY(CountryId)
 );
-CREATE INDEX ON Country USING HASH (CountryName);
+CREATE INDEX ON Country USING (CountryName, CountryId);
 
 CREATE TABLE Person(
     PersonId INT NOT NULL,
