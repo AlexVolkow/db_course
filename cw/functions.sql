@@ -14,40 +14,30 @@ CREATE TRIGGER VerifyFilmType
 BEFORE INSERT OR UPDATE ON Series
 FOR EACH ROW EXECUTE PROCEDURE CheckSerias();
 
---- Запрещяем вручать профессиональные награды людям занимающиеся другим родом деятельности 
---- (нельзя вручать актерские награды операторам и наоборот)
-CREATE OR REPLACE FUNCTION CheckAwardProfession()
-    RETURNS TRIGGER AS $$
-DECLARE 
-    AwardProfessionId INT;
-BEGIN
-    SELECT p.ProfessionId INTO AwardProfessionId
-    FROM PersonNomination p 
-    WHERE p.PNominationId = NEW.PNominationId;
-    IF AwardProfessionId IS NULL OR NEW.ProfessionId = AwardProfessionId THEN
-        RETURN NEW;
-    ELSE 
-        RETURN NULL;
-    END IF;
-END;
-$$ language plpgsql;
-
-CREATE TRIGGER VerifyAwardProfession
-BEFORE INSERT OR UPDATE ON PersonAward
-FOR EACH ROW EXECUTE PROCEDURE CheckAwardProfession();
-
 --- Проверяем что победить в каждой номинации в рамках фестиваля один
-CREATE OR REPLACE FUNCTION CheckOneFilmWinner()
+CREATE OR REPLACE FUNCTION CheckFilmWinner()
     RETURNS TRIGGER AS $$
 DECLARE
     CurrentWinners INT;
+    NominationRanking Ranking;
 BEGIN
-    IF NEW.Win = False THEN
+    SELECT (Ranking).RankingType, (Ranking).RankingPositions INTO NominationRanking 
+    FROM FilmNomination 
+    WHERE FNominationId = NEW.FNominationId;
+
+    IF NominationRanking.RankingPositions <= NEW.Position THEN
+        RETURN NULL;
+    END IF;
+
+    IF NominationRanking.RankingType = 'ranking_duplicate' 
+     OR (NominationRanking.RankingType = 'nomination' AND NEW.Position != 0 AND NominationRanking.RankingPositions > 1) THEN
         RETURN NEW;
     END IF;
+
     SELECT COUNT(*) INTO CurrentWinners
     FROM FilmAward FA
-    WHERE FA.AwardId = NEW.AwardId AND FA.FNominationId = NEW.FNominationId AND FA.Win = True;
+    WHERE FA.AwardId = NEW.AwardId AND FA.FNominationId = NEW.FNominationId AND FA.Position = NEW.Position;
+    
     IF CurrentWinners = 0 THEN
         RETURN NEW;
     ELSE 
@@ -59,20 +49,32 @@ $$ language plpgsql;
 
 CREATE TRIGGER VerifyOneFilmAwardWinner
 BEFORE INSERT OR UPDATE ON FilmAward
-FOR EACH ROW EXECUTE PROCEDURE CheckOneFilmWinner();
+FOR EACH ROW EXECUTE PROCEDURE CheckFilmWinner();
 
 --- Тоже для личных наград
-CREATE OR REPLACE FUNCTION CheckOnePersonWinner()
+CREATE OR REPLACE FUNCTION CheckPersonWinner()
     RETURNS TRIGGER AS $$
 DECLARE
     CurrentWinners INT;
+    NominationRanking Ranking;
 BEGIN
-    IF NEW.Win = False THEN
+    SELECT (Ranking).RankingType, (Ranking).RankingPositions INTO NominationRanking 
+    FROM PersonNomination 
+    WHERE PNominationId = NEW.PNominationId;
+
+    IF NominationRanking.RankingPositions <= NEW.Position THEN
+        RETURN NULL;
+    END IF;
+
+    IF NominationRanking.RankingType = 'ranking_duplicate' 
+     OR (NominationRanking.RankingType = 'nomination' AND NEW.Position != 0 AND NominationRanking.RankingPositions > 1) THEN
         RETURN NEW;
     END IF;
+
     SELECT COUNT(*) INTO CurrentWinners
-    FROM PersonAward PA
-    WHERE PA.AwardId = NEW.AwardId AND PA.PNominationId = NEW.PNominationId AND PA.Win = True;
+    FROM PersonAward FA
+    WHERE FA.AwardId = NEW.AwardId AND FA.PNominationId = NEW.PNominationId AND FA.Position = NEW.Position;
+    
     IF CurrentWinners = 0 THEN
         RETURN NEW;
     ELSE 
@@ -81,19 +83,56 @@ BEGIN
 END;
 $$ language plpgsql;
 
-
 CREATE TRIGGER VerifyOnePersonAwardWinner
 BEFORE INSERT OR UPDATE ON PersonAward
-FOR EACH ROW EXECUTE PROCEDURE CheckOnePersonWinner();
+FOR EACH ROW EXECUTE PROCEDURE CheckPersonWinner();
 
+--- Тоже для специальных личных наград
+CREATE OR REPLACE FUNCTION CheckSpecialPersonWinner()
+    RETURNS TRIGGER AS $$
+DECLARE
+    CurrentWinners INT;
+    NominationRanking Ranking;
+BEGIN
+    SELECT (Ranking).RankingType, (Ranking).RankingPositions INTO NominationRanking 
+    FROM SpecialNomination 
+    WHERE SNominationId = NEW.SNominationId;
+
+    IF NominationRanking.RankingPositions <= NEW.Position THEN
+        RETURN NULL;
+    END IF;
+
+    IF NominationRanking.RankingType = 'ranking_duplicate'
+     OR (NominationRanking.RankingType = 'nomination' AND NEW.Position != 0 AND NominationRanking.RankingPositions > 1) THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT COUNT(*) INTO CurrentWinners
+    FROM SpecialAward FA
+    WHERE FA.AwardId = NEW.AwardId AND FA.SNominationId = NEW.SNominationId AND FA.Position = NEW.Position;
+    
+    IF CurrentWinners = 0 THEN
+        RETURN NEW;
+    ELSE 
+        RETURN NULL;
+    END IF;
+END;
+$$ language plpgsql;
+
+CREATE TRIGGER VerifyOneSpecialPersonAwardWinner
+BEFORE INSERT OR UPDATE ON SpecialAward
+FOR EACH ROW EXECUTE PROCEDURE CheckSpecialPersonWinner();
 
 --- Получить текущую оценку фильма
-CREATE OR REPLACE FUNCTION CurrentFilmScore(FId INT) RETURNS FLOAT
+CREATE OR REPLACE FUNCTION CurrentFilmScore(FId INT) RETURNS Table(FilmScore FLOAT)
 AS $$ 
-    SELECT AVG(Score) 
+BEGIN
+    RETURN QUERY
+    SELECT AVG(Score) AS FilmScore
     FROM Score S
     WHERE S.FilmId = FId;
-$$ language sql;
+END;
+$$ language plpgsql;
 
 --- Получить следующий ключ для таблицы
 CREATE OR REPLACE FUNCTION NextKey(KName VARCHAR(50)) RETURNS INT
@@ -133,7 +172,6 @@ $$ language plpgsql;
 --- Создать профиль фильма в системе 
 CREATE OR REPLACE FUNCTION CreateFilm(
     mFilmName VARCHAR(100),
-    mReleaseDate DATE,
     mDuration INTERVAL,
     mFType FilmType,
     mSlogan VARCHAR(200),
@@ -146,9 +184,9 @@ DECLARE
 BEGIN
     SELECT * FROM NextKey('Film') INTO FId;
     INSERT INTO Film
-        (FilmId,FilmName,ReleaseDate,Duration,FType,Slogan,Budget, Description)
+        (FilmId,FilmName,Duration,FType,Slogan,Budget, Description)
     VALUES
-        (FId, mFilmName, mReleaseDate, mDescription, mFType, mSlogan, mBudget, mDescription);
+        (FId, mFilmName, mDescription, mFType, mSlogan, mBudget, mDescription);
     RETURN FId;
 END;
 $$ language plpgsql;
@@ -195,17 +233,12 @@ $$ language plpgsql;
 CREATE OR REPLACE FUNCTION BestPersonFilms(mPersonId INT, mFilmType FilmType) 
 RETURNS Table(FilmName VARCHAR(100), ProfessionName VARCHAR(100), FilmScore FLOAT) 
 AS $$
-    SELECT FilmName, ProfessionName, FilmScore FROM 
-     (SELECT FilmId, FilmName, ProfessionId FROM Film NATURAL JOIN
-        (SELECT FilmId, ProfessionId 
-        FROM Filmmaker
-        WHERE PersonId = mPersonId) AS PF 
-    WHERE FType = mFilmType)AS FN
-    NATURAL JOIN
-    (SELECT FilmId, AVG(Score) AS FilmScore 
-     FROM Score  
-     GROUP BY FilmId) AS FS
-    NATURAL JOIN Film NATURAL JOIN Profession
-    WHERE FilmScore > 7
+    SELECT FilmName, ProfessionName, AVG(Score) AS FilmScore
+    FROM Film NATURAL JOIN Filmmaker NATURAL JOIN Score NATURAL JOIN Profession
+    WHERE 
+        PersonId = mPersonId AND 
+        FType = mFilmType
+    GROUP BY FilmId, ProfessionName
+    HAVING AVG(Score) > 7
     ORDER BY FilmScore DESC;
 $$ language sql;

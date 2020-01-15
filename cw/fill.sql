@@ -28,7 +28,8 @@ VALUES
     (11, 'Лазарь', 'Милькис', '1923-11-15', 'Наумович', 2),
     (12, 'Лариса', 'Гузеева', '1959-05-23', 'Андреевна', 2),
     (13, 'Никита', 'Михалков', '1945-10-21', 'Сергеевич', 2),
-    (14, 'Алиса', 'Фрейндлих', '1934-12-08', 'Брунова', 2);
+    (14, 'Алиса', 'Фрейндлих', '1934-12-08', 'Брунова', 2),
+    (15, 'Орсон', 'Уэллс', '1924-12-07', null, 1);
 
 INSERT INTO Genre
     (GenreId, GenreName)
@@ -43,7 +44,6 @@ VALUES
 INSERT INTO Film
     (FilmId,
     FilmName,
-    ReleaseDate,
     Duration,
     FType,
     Slogan,
@@ -52,7 +52,6 @@ INSERT INTO Film
 VALUES
      (1,
     'Forrest Gump',
-    '1994-06-23',
     '142m',
     'film',
     'Мир уже никогда не будет прежним, после того как вы увидите его глазами Форреста Гампа',
@@ -61,7 +60,6 @@ VALUES
      ),
     (2,
     'Game of Thrones',
-    '2011-05-21',
     '55m',
     'series',
     'Победа или смерть',
@@ -70,7 +68,6 @@ VALUES
     ),
     (3,
     'Жестокий романс',
-    '1984-10-23',
     '137m',
     'film',
     null,
@@ -79,7 +76,6 @@ VALUES
     ),
     (4,
     'Knives Out',
-    '2019-12-12',
     '130m',
     'film',
     'У каждого свой мотив',
@@ -87,13 +83,31 @@ VALUES
     null),
     (5,
     'The Lighthouse',
-    '2020-05-19',
     '109m',
     'film',
     null,
     (1000000, 'USD'),
     null);
-    
+
+INSERT INTO Character
+    (CharacterId, FilmId, CharacterName)
+VALUES
+    (1, 1, 'Forest Gump'),
+    (2, 2, 'Tyrion Lannister'),
+    (3, 2, 'Cersei Lannister'),
+    (4, 3, 'Лариса'),
+    (5, 3, 'Сергей Сергевич Паратов'),
+    (6, 3, 'Харита Игнатьевна Огудалова');
+
+INSERT INTO ReleasePlan
+    (FilmId, CountryId, Date)
+VALUES
+    (1, 1, '1994-06-23'),
+    (2, 1, '2011-05-21'),
+    (3, 2, '1984-10-23'),
+    (4, 1, '2019-12-12'),
+    (5, 1, '2020-05-19');
+
 INSERT INTO FilmGenre 
     (FilmId, GenreId) 
 VALUES 
@@ -176,26 +190,36 @@ VALUES
     (8, 'оператор');
 
 INSERT INTO Filmmaker
-    (FilmId, PersonId, ProfessionId, Сharacter)
+    (FilmId, PersonId, ProfessionId)
 VALUES
-    (1, 1, 3, 'Forrest Gump'),
-    (1, 2, 1, null),
-    (2, 3, 6, null),
-    (2, 4, 4, null),
-    (2, 4, 1, null),
-    (2, 4, 2, null),
-    (2, 5, 4, null),
-    (2, 5, 1, null),
-    (2, 5, 2, null),
-    (2, 6, 3, 'Tyrion Lannister'),
-    (2, 7, 3, 'Cersei Lannister'),
-    (2, 8, 7, null),
-    (3, 9, 1, null),
-    (3, 10, 8, null),
-    (3, 11, 5, null),
-    (3, 12, 3, 'Лариса Дмитриевна Огудалова'),
-    (3, 13, 3, 'Сергей Сергеевич Паратов'),
-    (3, 14, 3, 'Харита Игнатьевна Огудалова');
+    (1, 1, 3),
+    (1, 2, 1),
+    (2, 3, 6),
+    (2, 4, 4),
+    (2, 4, 1),
+    (2, 4, 2),
+    (2, 5, 4),
+    (2, 5, 1),
+    (2, 5, 2),
+    (2, 6, 3),
+    (2, 7, 3),
+    (2, 8, 7),
+    (3, 9, 1),
+    (3, 10, 8),
+    (3, 11, 5),
+    (3, 12, 3),
+    (3, 13, 3),
+    (3, 14, 3);
+
+INSERT INTO FilmmakerCharacter
+    (FilmId, PersonId, ProfessionId, CharacterId)
+VALUES
+    (1, 1, 3, 1),
+    (2, 6, 3, 2),
+    (2, 7, 3, 3),
+    (3, 12, 3, 4),
+    (3, 13, 3, 5),
+    (3, 14, 3, 6);
 
 INSERT INTO AwardingOrg
     (AwardId, AwardName, AwardDate)
@@ -207,56 +231,66 @@ VALUES
     (5, 'Эмми', '2019-04-01');
 
 INSERT INTO FilmNomination
-    (FNominationId, FNominationName)
+    (FNominationId, FNominationName, Ranking)
 VALUES
-    (1, 'ТВ-шоу года'),
-    (2, 'Лучший телесериал в жанре фентези'),
-    (3, 'Лучший драматический сериал'),
-    (4, 'Лучшая драка'),
-    (5, 'Лучший фильм'),
-    (6, 'Лучший монтаж'),
-    (7, 'Лучший адаптивный сценарий'),
-    (8, 'Лучшие визуальные эффекты'),
-    (9, 'Лучший грим'),
-    (10, 'Лучшая работа оператора');
+    (1, 'ТВ-шоу года', ('nomination', 2)),
+    (2, 'Лучший телесериал в жанре фентези', ('nomination', 2)),
+    (3, 'Лучший драматический сериал', ('nomination', 2)),
+    (4, 'Лучшая драка', ('nomination', 2)),
+    (5, 'Лучший фильм', ('nomination', 2)),
+    (6, 'Лучший монтаж', ('nomination', 2)),
+    (7, 'Лучший адаптивный сценарий', ('nomination', 2)),
+    (8, 'Лучшие визуальные эффекты', ('nomination', 2)),
+    (9, 'Лучший грим', ('nomination', 2)),
+    (10, 'Лучшая работа оператора', ('nomination', 2));
 
 INSERT INTO PersonNomination
-    (PNominationId, PNominationName, ProfessionId)
+    (PNominationId, PNominationName, ProfessionId, Ranking)
 VALUES
-    (1, 'Лучшая мужская роль', 3),
-    (2, 'Лучший режиссер', 1),
-    (3, 'Лучший продюссер', 4),
-    (4, 'Лучшая телеакриса', 3),
-    (5, 'Лучший актер второго плана в телесериале', 3),
-    (6, 'Лучший оператор', 8);
+    (1, 'Лучшая мужская роль', 3, ('nomination', 2)),
+    (2, 'Лучший режиссер', 1, ('nomination', 2)),
+    (3, 'Лучший продюссер', 4, ('nomination', 2)),
+    (4, 'Лучшая телеакриса', 3, ('nomination', 2)),
+    (5, 'Лучший актер второго плана в телесериале', 3, ('nomination', 2)),
+    (6, 'Лучший оператор', 8, ('nomination', 2));
+
+INSERT INTO SpecialNomination
+    (SNominationId, SNominationName, Ranking)
+VALUES
+    (1, 'За высочайший артистизм и универсальный талант', ('nomination', 1));
 
 INSERT INTO FilmAward
-    (AwardId, FNominationId, FilmId, Win)
+    (AwardId, FNominationId, FilmId, Position)
 VALUES
-    (1, 5, 1, True),
-    (1, 7, 1, True),
-    (1, 9, 1, False),
-    (1, 10, 1, False),
-    (2, 5, 1, True),
-    (2, 8, 1, False),
-    (4, 5, 1, False),
-    (4, 1, 2, True),
-    (4, 4, 2, False),
-    (3, 2, 2, True),
-    (5, 3, 2, True);
+    (1, 5, 1, 0),
+    (1, 7, 1, 0),
+    (1, 9, 1, 1),
+    (1, 10, 1, 1),
+    (2, 5, 1, 0),
+    (2, 8, 1, 1),
+    (4, 5, 1, 1),
+    (4, 1, 2, 0),
+    (4, 4, 2, 1),
+    (3, 2, 2, 0),
+    (5, 3, 2, 0);
 
 INSERT INTO PersonAward
-    (AwardId, PNominationId, FilmId, PersonId, ProfessionId, Win)
+    (AwardId, PNominationId, FilmId, PersonId, ProfessionId, Position)
 VALUES
-    (1, 1, 1, 1, 3, True),
-    (1, 2, 1, 2, 1, True),
-    (2, 1, 1, 1, 3, True),
-    (2, 2, 1, 2, 1, False),
-    (3, 4, 2, 7, 3, True),
-    (3, 5, 2, 6, 3, False),
-    (5, 5, 2, 6, 3, True),
-    (5, 3, 2, 4, 4, True);
+    (1, 1, 1, 1, 3, 0),
+    (1, 2, 1, 2, 1, 0),
+    (2, 1, 1, 1, 3, 0),
+    (2, 2, 1, 2, 1, 1),
+    (3, 4, 2, 7, 3, 0),
+    (3, 5, 2, 6, 3, 1),
+    (5, 5, 2, 6, 3, 0),
+    (5, 3, 2, 4, 4, 0);
 
+INSERT INTO SpecialAward
+    (AwardId, SNominationId, PersonId, Position)
+VALUES
+    (1, 1, 15, 0); 
+  
 INSERT INTO Keys
     (TableName, MinKey)
 VALUES
@@ -267,4 +301,6 @@ VALUES
     ('Profession', 10),
     ('AwardingOrg', 10),
     ('PersonNomination', 10),
-    ('FilmNomination', 11);
+    ('FilmNomination', 11),
+    ('SpecialNomination', 2),
+    ('Character', 7);
