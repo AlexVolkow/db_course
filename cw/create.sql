@@ -157,7 +157,6 @@ CREATE TABLE Filmmaker(
     FilmId INT NOT NULL,
     PersonId INT NOT NULL,
     ProfessionId INT NOT NULL,
-    Сharacter VARCHAR(100),
     PRIMARY KEY (FilmId, PersonId, ProfessionId),
     FOREIGN KEY (FilmId) REFERENCES Film(FilmId),
     FOREIGN KEY (PersonId) REFERENCES Person(PersonId),
@@ -242,6 +241,7 @@ CREATE TABLE FilmAward(
 CREATE INDEX ON FilmAward USING HASH (FilmId);
 CREATE INDEX ON FilmAward USING HASH (AwardId);
 CREATE INDEX ON FilmAward USING HASH (FNominationId);
+CREATE INDEX ON FilmAward USING BTREE (FilmId, AwardId, FNominationId);
 
 CREATE TABLE PersonAward(
     AwardId INT NOT NULL,
@@ -258,6 +258,8 @@ CREATE TABLE PersonAward(
 CREATE INDEX ON PersonAward(FilmId, PersonId, ProfessionId);
 CREATE INDEX ON PersonAward USING HASH (AwardId);
 CREATE INDEX ON PersonAward USING HASH (PNominationId);
+CREATE INDEX ON PersonAward USING BTREE (FilmId, AwardId, FNominationId);
+CREATE INDEX ON PersonAward USING BTREE (PersonId, FilmId);
 
 CREATE TABLE SpecialAward(
     AwardId INT NOT NULL,

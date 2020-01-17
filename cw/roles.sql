@@ -1,7 +1,8 @@
 --- Доступ на чтение - всем
 GRANT SELECT 
     ON TABLE Person, Country, Genre, Film, FilmGenre, FilmCountry, Score, Series, Boxoffice,
-     Profession, Filmmaker, AwardingOrg, FilmNomination, PersonNomination, FilmAward, PersonAward
+     Profession, Filmmaker, AwardingOrg, FilmNomination, PersonNomination, FilmAward, PersonAward,
+     Character, FilmmakerCharacter, SpecialNomination, SpecialAward
     TO Public;
 
 GRANT SELECT 
@@ -14,7 +15,8 @@ CREATE ROLE Admin;
 
 GRANT SELECT, INSERT, UPDATE
     ON TABLE Person, Country, Genre, Film, FilmGenre, FilmCountry, Score, Series, Boxoffice,
-     Profession, Filmmaker, AwardingOrg, FilmNomination, PersonNomination, FilmAward, PersonAward, Keys
+     Profession, Filmmaker, AwardingOrg, FilmNomination, PersonNomination, FilmAward, PersonAward, Keys, 
+      Character, FilmmakerCharacter
     TO GROUP Admin;
 
 GRANT EXECUTE 
@@ -54,5 +56,5 @@ GRANT EXECUTE
 CREATE ROLE FilmAward;
 
 GRANT INSERT, UPDATE
-    ON TABLE FilmNomination, PersonNomination, FilmAward, PersonAward
+    ON TABLE FilmNomination, PersonNomination, FilmAward, PersonAward, SpecialNomination, SpecialAward
     TO GROUP FilmAward;

@@ -56,7 +56,10 @@ AS SELECT AwardId, PersonId, SNominationName as Nomination, Position from Specia
 
 CREATE VIEW PersonAwards AS 
     SELECT PersonId, AwardName, Nomination, AwardDate, Position FROM AwardingOrg NATURAL JOIN
-        (SELECT * FROM (SELECT * FROM OnlyPersonAward) A UNION (SELECT * FROM OnlySpecialAward)) B;
+        (SELECT * FROM
+        (SELECT * FROM OnlyPersonAward) A 
+        UNION 
+        (SELECT * FROM OnlySpecialAward)) B;
 
 --- Самые титулованные работники киноиндустрии
 CREATE VIEW MostAwardFilmmakers AS 
@@ -65,4 +68,19 @@ CREATE VIEW MostAwardFilmmakers AS
     GROUP BY PersonId
     ORDER BY Nominations DESC;
 
---- Фестивали, номинации, победители 
+--- Фильмы собравшие наибольнее количество номинаций на кино-премии
+CREATE VIEW OnlyFilms AS 
+    SELECT * FROM Film 
+    WHERE FType = 'film';
+
+CREATE VIEW FilmByNomination AS 
+    SELECT FilmId, AwardId, COUNT(FNominationId) AS Nomination 
+        FROM FilmAward
+        GROUP BY FilmId, AwardId;
+
+CREATE VIEW BestFilmAward AS
+    SELECT FilmId, FilmName, AwardId, Nomination FROM 
+    OnlyFilms NATURAL JOIN FilmByNomination WHERE
+        (AwardId, Nomination) IN (SELECT AwardId, MAX(Nomination)
+        FROM FilmByNomination 
+        GROUP BY AwardId); 
